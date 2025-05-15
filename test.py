@@ -52,6 +52,12 @@ states, energies, correlations = PS.run_SQA(graph_path, N, P, sweeps, runs=runs,
 
 print(f'SQA: {energies[0][30]}')
 
+# To find cut value: 
+import SQA_MC_Engine as SQA
+csr_data, csr_index, csr_ptr = SQA.sparse_csr_generator(N, graph_path)
+
+cut = SQA.CutValue(csr_data, csr_index, csr_ptr, states[0][30], N)
+
 states, energies = PS.run_SA(graph_path, N, sweeps, runs=runs, state=state, beta=beta, energy_return=energy_return, parallel=parallel)
 
 # State[run][Node]
