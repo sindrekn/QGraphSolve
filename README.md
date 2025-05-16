@@ -1,1 +1,1 @@
-# SQA_SA_SD
+# QGraphSolve
