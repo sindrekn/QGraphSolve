@@ -8,20 +8,14 @@ from cupyx.scipy.sparse import kron, identity, csr_matrix
 from cupyx.scipy.sparse.linalg import eigsh, gmres
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import warnings
-import seaborn as sns
 import time
-
-# Suppress future warnings for cleaner output
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 # ----------------------
 # Parameters and paths
 # ----------------------
-N = 16  # Number of qubits
+N = 16  # Number of nodes
 
-ta = 7  # Total annealing time
+ta = 14  # Total annealing time
 delta_s = 0.02  # Time step size
 alpha = 1  # Schedule parameter
 beta = 0   # Schedule parameter
@@ -40,14 +34,14 @@ time_steps = np.linspace(0, ta, int(ta/delta_s))
 # ----------------------
 # Utility functions
 # ----------------------
-def apply_operator(operator, target_qubit, num_qubits):
+def apply_operator(operator, target_node, num_nodes):
     """
-    Applies a single-qubit operator to the target qubit in an N-qubit system using Kronecker products (GPU version).
+    Applies a single-node operator to the target node in an N-node system using Kronecker products (GPU version).
     """
     I = identity(2, format='csr')
-    result = I if target_qubit != 0 else operator
-    for i in range(1, num_qubits):
-        result = kron(result, operator if i == target_qubit else I, format='csr')
+    result = I if target_node != 0 else operator
+    for i in range(1, num_nodes):
+        result = kron(result, operator if i == target_node else I, format='csr')
     return result
 
 # ----------------------
@@ -65,7 +59,7 @@ def Hamiltonian(N, graph_path):
     coupling_constants = {(df['Node1'][i], df['Node2'][i]): df['Weight'][i] 
                         for i in range(len(df)) if df['Node1'][i] < N and df['Node2'][i] < N}
 
-    # Driver Hamiltonian: sum of sigma_x on each qubit
+    # Driver Hamiltonian: sum of sigma_x on each node
     H_D = sum(apply_operator(sigma_x, n, N) for n in range(N))
     # Problem Hamiltonian: sum over weighted sigma_z sigma_z couplings
     H_P = sum(J * apply_operator(sigma_z, i, N).dot(apply_operator(sigma_z, j, N)) 
@@ -155,6 +149,6 @@ for graph in range(1, 101):
     print(f"Time: {time_run}")
 
     # Save the DataFrame to CSV after each graph
-    Data.to_csv(save_path + f'/DataNode{N}Time{ta}Linear.csv', index=False)
+    # Data.to_csv(save_path + f'/DataNode{N}Time{ta}Linear.csv', index=False)
 
 
