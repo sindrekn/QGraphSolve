@@ -8,27 +8,7 @@ from scipy.sparse import kron, identity, csr_matrix
 from scipy.sparse.linalg import eigsh, gmres
 import pandas as pd
 import time
-
-# ----------------------
-# Parameters and paths
-# ----------------------
-N = 8  # Number of nodes
-
-ta = 14  # Total annealing time
-delta_s = 0.02  # Time step size
-alpha = 1  # Schedule parameter
-beta = 0   # Schedule parameter
-
-# Path to graph CSV files and save directory
-# (Update these paths as needed for your system)
-graph_path = f'C:/Users/sindr/Documents/Masteroppgave/LastResults/SmallGraphs/RandomInteraction/Graphs/QGraphSolve/ExGraphs/SmallGraphs/Graphs{N}Nodes/'
-save_path = ''
-
-# ----------------------
-# DataFrame for results
-# ----------------------
-Data = pd.DataFrame(columns=['Graph', 'Success probability for GS', 'min_diff', 'Time'])
-time_steps = np.linspace(0, ta, int(ta/delta_s))
+import os
 
 # ----------------------
 # Utility functions
@@ -120,38 +100,65 @@ def CPU_diagonalization(N, ta, delta_s, alpha, beta, graph_path):
 # ----------------------
 # Main loop over graphs
 # ----------------------
-for graph in range(1, 2): 
-    # Path to the current graph CSV
-    path = graph_path + f'RandomGraph{graph}.csv'
-    
+def main(N = 8, graph=1, ta=14, delta_s=0.02, alpha=1, beta=0, graph_path="", save=False): 
+    # ----------------------
+    # Parameters and paths
+    # ----------------------
+    # N: int = 16  # Number of nodes in the graph
+    # graph: int = 1  # Graph index to use
+    # ta: float = 14  # Total annealing time
+    # delta_s: float = 0.02  # Time step for the simulation
+    # alpha: float = 1  # Annealing parameter
+    # beta: float = 0  # Annealing parameter
+    # graph_path: str = 'path/to/graph.csv'  # Path to the graph CSV file
+    # save: bool = False  # Whether to save the results to a CSV file
+
+    # ----------------------
+    # Find the path to the parent directory
+    # ----------------------
+    current_path = os.getcwd()
+    parent_path = os.path.dirname(current_path)
+
+    save_path = os.path.join(parent_path, 'ExGraphs', 'Results', 'SD')
+
+    if graph_path == "":  # If no path is provided, construct it based on the current working directory
+
+        # Path to graph CSV files and save directory
+        # (Update these paths as needed for your system)
+        graph_path = os.path.join(parent_path, 'ExGraphs', 'SmallGraphs', f'Graphs{N}Nodes', f'RandomGraph{graph}.csv')
+
+    # ----------------------
+    # DataFrame for results
+    # ----------------------
+    Data = pd.DataFrame(columns=['Graph', 'Success probability for GS', 'min_diff', 'Time'])
+
     # Start timing
     time_start = time.time()
-    
+
     # Run the simulation
-    success_probabilities, min_diff, psi = CPU_diagonalization(N, ta, delta_s, alpha, beta, path)
-    
+    success_probabilities, min_diff, psi = CPU_diagonalization(N, ta, delta_s, alpha, beta, graph_path)
+
     # End timing
     time_run = time.time() - time_start
-    
+
     # Save the results to the DataFrame
     new_data_row = pd.DataFrame([[graph, success_probabilities, min_diff, time_run]], 
                                 columns=['Graph', 'Success probability for GS', 'min_diff', 'Time'])
     if Data.empty:
         Data = new_data_row
-    else:
+    else: 
         Data = pd.concat([Data, new_data_row], ignore_index=True)
-    
+
     # Print results for this graph
     print(f"Graph {graph} completed")
     print(f"Ground state probability: {success_probabilities}")
     print(f"Minimum energy gap: {min_diff}")
     print(f"Time: {time_run}")
 
-    # Optionally save the DataFrame to CSV and the final wave function
-    # Data.to_csv(save_path + f'/DataNode{N}Time{ta}Linear.csv', index=False)
-    # np.save(save_path + f'/FinalWavefunctionNode{N}Time{ta}Linear.npy', psi)
-
-
-
+    # Save the DataFrame to CSV after each graph
+    if save:
+        Data.to_csv(save_path + f'/Data_Node{N}_Graph{graph}_Time{ta}.csv', index=False)
+    
+main()
 
 
